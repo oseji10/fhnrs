@@ -8,7 +8,7 @@ use App\Http\Controllers\PFAController;
 use App\Http\Controllers\HISController;
 use App\Http\Controllers\StaffController;
 Route::get('/', function () {
-    return Inertia::render('welcome');
+    return Inertia::render('login');
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
