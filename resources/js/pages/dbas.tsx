@@ -205,6 +205,7 @@ export default function DBAs({ dbas }: Props) {
                                             <option value="Department">Department</option>
                                             <option value="Board">Board</option>
                                             <option value="Agency">Agency</option>
+                                            <option value="Hospital">Hospital</option>
                                         </select>
                                         {errors.dbaType && (
                                             <p className="mt-1 text-sm text-red-600">{errors.dbaType}</p>

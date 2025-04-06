@@ -16,12 +16,12 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Health Insurance Scheme',
-        href: '/his',
+        title: 'Health Insurance Providers',
+        href: '/hip',
     },
 ];
 
-export default function His({ his }: Props) {
+export default function His({ hip }: Props) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
     
@@ -34,7 +34,7 @@ export default function His({ his }: Props) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingOrg) {
-            put(`/his/${editingOrg.HISId}`, {
+            put(`/hip/${editingOrg.HISId}`, {
                 onSuccess: () => {
                     setIsModalOpen(false);
                     setEditingOrg(null);
@@ -42,7 +42,7 @@ export default function His({ his }: Props) {
                 }
             });
         } else {
-            post('/his', {
+            post('/hip', {
                 onSuccess: () => {
                     setIsModalOpen(false);
                     reset();
@@ -63,7 +63,7 @@ export default function His({ his }: Props) {
 
     const handleDelete = (HISId: number) => {
         if (confirm('Are you sure you want to delete this record?')) {
-            destroy(`/his/${HISId}`);
+            destroy(`/hip/${HISId}`);
         }
     };
 
@@ -80,7 +80,7 @@ export default function His({ his }: Props) {
                         }}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
-                        Add HIS
+                        Add HIP
                     </button>
                 </div>
 
@@ -104,7 +104,7 @@ export default function His({ his }: Props) {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {his.map((org) => (
+                                {hip.map((org) => (
                                     <tr 
                                         key={org.HISId}
                                         className="hover:bg-gray-50 dark:hover:bg-gray-900"
@@ -153,7 +153,7 @@ export default function His({ his }: Props) {
                         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl border border-gray-200 dark:border-gray-700">
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                    {editingOrg ? 'Edit HIS' : 'Add New HIS'}
+                                    {editingOrg ? 'Edit HIP' : 'Add New HIP'}
                                 </h2>
                                 <button
                                     onClick={() => {

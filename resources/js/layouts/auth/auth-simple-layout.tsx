@@ -18,7 +18,8 @@ export default function AuthSimpleLayout({ children, title, description }: Props
                             <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
                                 {/* <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" /> */}
                             </div>
-                                <h2>FHNRS</h2>
+                            <img src='/fcta.png' width={'15%'}/>
+                                <h1>FCT Nominal Roll System (FNRS)</h1>
                             <span className="sr-only">{title}</span>
                         </Link>
 

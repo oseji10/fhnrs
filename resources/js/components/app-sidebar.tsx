@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { ArrowDownNarrowWide, ArrowLeftRightIcon, BookOpen, Folder, Hospital, LayoutGrid, NetworkIcon, TicketsPlane, TreePalm, Users2, Wallet2, WavesLadder } from 'lucide-react';
+import { ArrowDownNarrowWide, ArrowLeftRightIcon, BookOpen, ChartCandlestick, Folder, Hospital, LayoutGrid, NetworkIcon, TicketsPlane, TreePalm, Users2, Wallet2, WavesLadder } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -36,8 +36,8 @@ const mainNavItems: NavItem[] = [
     },
 
     {
-        title: 'HIS',
-        href: '/his',
+        title: 'HIP',
+        href: '/hip',
         icon: Hospital,
     },
 
@@ -51,6 +51,12 @@ const mainNavItems: NavItem[] = [
         title: 'Transfer/Posting',
         href: '/transfer',
         icon: ArrowLeftRightIcon,
+    },
+
+    {
+        title: 'Reports',
+        href: '/reports',
+        icon: ChartCandlestick,
     },
 ];
 

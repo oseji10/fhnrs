@@ -3,16 +3,16 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\HIS;
+use App\Models\HIP;
 use Inertia\Inertia;
 class HISController extends Controller
 {
     public function index()
     {
-        $his = HIS::all();
+        $hip = HIP::all();
         
-        return Inertia::render('his', [
-            'his' => $his
+        return Inertia::render('hip', [
+            'hip' => $hip
         ]);
     }
 
@@ -25,7 +25,7 @@ class HISController extends Controller
 
         HIS::create($validated);
 
-        return redirect()->route('his.index');
+        return redirect()->route('hip.index');
     }
 
 
@@ -38,12 +38,12 @@ class HISController extends Controller
 
         $his->update($validated);
 
-        return redirect()->route('his.index');
+        return redirect()->route('hip.index');
     }
 
     public function destroy(HIS $his)
     {
         $his->delete();
-        return redirect()->route('his.index');
+        return redirect()->route('hip.index');
     }
 }

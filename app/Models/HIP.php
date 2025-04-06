@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class HIS extends Model
+class HIP extends Model
 {
     protected $table = 'his';
     protected $primaryKey = 'HISId';

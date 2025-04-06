@@ -8,5 +8,5 @@ class Cadre extends Model
 {
     protected $table = 'cadre';
     protected $primaryKey = 'cadreId';
-    protected $fillable = ['cadreName', 'step'];
+    protected $fillable = ['cadreName', 'step', 'maximumStep', 'cadreGroupId', 'cadreSubGroupId', 'maximumGradeLevel'];
 }

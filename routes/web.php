@@ -35,15 +35,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/pfas/{pfas}', [PFAController::class, 'update'])->name('pfas.update');
     Route::delete('/pfas/{pfas}', [PFAController::class, 'destroy'])->name('pfas.destroy');
 
-    Route::get('/his', [HISController::class, 'index'])->name('his.index');
-    Route::post('/his', [HISController::class, 'store'])->name('his.store');
-    Route::put('/his/{his}', [HISController::class, 'update'])->name('his.update');
-    Route::delete('/his/{his}', [HISController::class, 'destroy'])->name('his.destroy');
+    Route::get('/hip', [HISController::class, 'index'])->name('hip.index');
+    Route::post('/hip', [HISController::class, 'store'])->name('hip.store');
+    Route::put('/hip/{hip}', [HISController::class, 'update'])->name('hip.update');
+    Route::delete('/hip/{hip}', [HISController::class, 'destroy'])->name('hip.destroy');
 
     Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
     Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
     Route::put('/staff/{staff}', [StaffController::class, 'update'])->name('staff.update');
     Route::delete('/staff/{staff}', [StaffController::class, 'destroy'])->name('staff.destroy');
+
+    Route::get('/cadre-groups', [CadreController::class, 'cadreGroups'])->name('cadre-groups.index');
+    Route::post('/cadre-groups', [CadreController::class, 'storeCadreGroup'])->name('cadre-groups.store');
+    Route::put('/cadre-groups/{group}', [CadreController::class, 'update'])->name('cadre-groups.update');
+    Route::delete('/cadre-groups/{group}', [CadreController::class, 'destroy'])->name('cadre-groups.destroy');
+
+    Route::get('/cadre-subgroups', [CadreController::class, 'cadreSubGroups'])->name('cadre-subgroups.index');
+    Route::post('/cadre-subgroups', [CadreController::class, 'storeCadreSubGroup'])->name('cadre-subgroups.store');
+    Route::put('/cadre-subgroups/{group}', [CadreController::class, 'update'])->name('cadre-subgroups.update');
+    Route::delete('/cadre-subgroups/{group}', [CadreController::class, 'destroy'])->name('cadre-subgroups.destroy');
 });
 
 require __DIR__.'/settings.php';
