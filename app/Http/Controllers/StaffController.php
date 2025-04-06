@@ -25,6 +25,7 @@ class StaffController extends Controller
 
     public function store(Request $request)
     {
+        // Validate the request data
         $validated = $request->validate([
     'surname' => 'required|string|max:255',
     'fileNumber' => 'nullable',
