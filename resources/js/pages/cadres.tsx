@@ -181,6 +181,7 @@ export default function Cadres({ cadres, cadreGroups, cadreSubgroups }: Props) {
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                 {cadres.map((org) => (
+                                    // render table
                                     <tr key={org.cadreId} className="hover:bg-gray-50 dark:hover:bg-gray-900">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{org.cadreId}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{org.cadreName}</td>
