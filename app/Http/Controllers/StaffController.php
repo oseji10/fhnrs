@@ -11,6 +11,7 @@ class StaffController extends Controller
 {
     public function index()
     {
+        // Fetch all staff, cadres, and dbas
         $staff = Staff::all();
         $cadres = Cadre::all();
         $dbas = DBAs::all(['dbaId', 'dbaName']);
