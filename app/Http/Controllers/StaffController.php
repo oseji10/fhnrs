@@ -12,7 +12,7 @@ class StaffController extends Controller
     public function index()
     {
         $staff = Staff::all();
-        $cadres = Cadre::all(['cadreId', 'cadreName', 'step']);
+        $cadres = Cadre::all();
         $dbas = DBAs::all(['dbaId', 'dbaName']);
     
         return Inertia::render('staff', [

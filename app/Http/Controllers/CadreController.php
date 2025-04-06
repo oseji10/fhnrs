@@ -12,9 +12,9 @@ class CadreController extends Controller
 {
     public function index()
     {
-        $cadres = Cadre::all();
+        $cadres = Cadre::with('cadre_group', 'cadre_subgroup')->get();
         
-        return Inertia::render('cadres', [
+        return Inertia::render('cadres', [ 
             'cadres' => $cadres,
             'cadreGroups' => CadreGroup::all(),
             'cadreSubgroups' => CadreSubgroup::all(),
@@ -25,7 +25,6 @@ class CadreController extends Controller
     {
         $validated = $request->validate([
             'cadreName' => 'required|string|max:255',
-            // 'step' => 'required|in:Step 1,Step 2,Step 3, Step 4, Step 5, Step 6',
             'maximumGradeLevel' => 'nullable',
             'maximumStep' => 'nullable',
             'cadreGroupId' => 'required|integer',
