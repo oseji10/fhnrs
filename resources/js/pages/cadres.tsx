@@ -67,8 +67,8 @@ export default function Cadres({ cadres, cadreGroups, cadreSubgroups }: Props) {
 
     // Filter Cadre Subgroups based on selected Cadre Group
     useEffect(() => {
-        console.log('Cadre Group ID in useEffect:', data.cadreGroupId);
-        console.log('All Subgroups:', cadreSubgroups);
+        // console.log('Cadre Group ID in useEffect:', data.cadreGroupId);
+        // console.log('All Subgroups:', cadreSubgroups);
         if (data.cadreGroupId) {
             const filtered = cadreSubgroups.filter(subgroup => subgroup.cadreGroupId === Number(data.cadreGroupId));
             console.log('Filtered Subgroups:', filtered);

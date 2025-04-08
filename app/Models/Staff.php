@@ -32,4 +32,20 @@ class STAFF extends Model
     'dba',
     'userId',
     'status'];
+
+
+    public function his()
+    {
+        return $this->belongsTo(HIP::class, 'HISId');
+    }
+
+    public function bank()
+    {
+        return $this->belongsTo(Bank::class, 'bankId');
+    }
+
+    public function pfa()
+    {
+        return $this->belongsTo(PFA::class, 'PFAId');
+    }
 }

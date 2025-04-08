@@ -6,20 +6,30 @@ use Illuminate\Http\Request;
 use App\Models\Staff;
 use App\Models\Cadre;
 use App\Models\DBAs;
+use App\Models\HIP;
+use App\Models\Bank;
+use App\Models\PFA;
 use Inertia\Inertia;
 class StaffController extends Controller
 {
     public function index()
     {
         // Fetch all staff, cadres, and dbas
-        $staff = Staff::all();
+        // $staff = Staff::with('his', 'bank', 'pfa')->get();
+        $staff = Staff::with(['his', 'bank', 'pfa'])->get()->toArray();
         $cadres = Cadre::all();
+        $his = HIP::all();
+        $pfa = PFA::all();
+        $bank = Bank::all();
         $dbas = DBAs::all(['dbaId', 'dbaName']);
     
         return Inertia::render('staff', [
             'staff' => $staff,
             'cadres' => $cadres,
             'dbas' => $dbas,
+            'his' => $his,
+            'bank' => $bank,
+            'pfa' => $pfa,
         ]);
     }
 
