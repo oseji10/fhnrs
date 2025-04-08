@@ -12,24 +12,58 @@ use App\Models\PFA;
 use Inertia\Inertia;
 class StaffController extends Controller
 {
-    public function index()
-    {
-        // Fetch all staff, cadres, and dbas
-        // $staff = Staff::with('his', 'bank', 'pfa')->get();
-        $staff = Staff::with(['his', 'bank', 'pfa'])->get()->toArray();
-        $cadres = Cadre::all();
-        $his = HIP::all();
-        $pfa = PFA::all();
-        $bank = Bank::all();
-        $dbas = DBAs::all(['dbaId', 'dbaName']);
+    // public function index()
+    // {
+    //     // Fetch all staff, cadres, and dbas
+    //     // $staff = Staff::with('his', 'bank', 'pfa')->get();
+    //     $staff = Staff::with(['his', 'bank', 'pfa'])->get()->toArray();
+    //     $cadres = Cadre::all();
+    //     $his = HIP::all();
+    //     $pfa = PFA::all();
+    //     $bank = Bank::all();
+    //     $dbas = DBAs::all(['dbaId', 'dbaName']);
     
+    //     return Inertia::render('staff', [
+    //         'staff' => $staff,
+    //         'cadres' => $cadres,
+    //         'dbas' => $dbas,
+    //         'his' => $his,
+    //         'bank' => $bank,
+    //         'pfa' => $pfa,
+    //     ]);
+    // }
+
+    public function index(Request $request)
+    {
+        $perPage = $request->input('per_page', 10); // Default to 10 items per page
+        $search = $request->input('search', '');
+
+        $query = Staff::query();
+
+        // Apply search filter if provided
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('fileNumber', 'like', "%{$search}%")
+                  ->orWhere('surname', 'like', "%{$search}%")
+                  ->orWhere('firstName', 'like', "%{$search}%")
+                //   ->orWhere('lastName', 'like', "%{$search}%")
+                  ->orWhere('otherNames', 'like', "%{$search}%");
+            });
+        }
+
+        $staff = $query->with(['his', 'bank', 'pfa'])->paginate($perPage)->appends(['search' => $search, 'per_page' => $perPage]);
+
         return Inertia::render('staff', [
             'staff' => $staff,
-            'cadres' => $cadres,
-            'dbas' => $dbas,
-            'his' => $his,
-            'bank' => $bank,
-            'pfa' => $pfa,
+            'cadres' => Cadre::all(['cadreId', 'cadreName']),
+            'dbas' => DBAs::all(['dbaId', 'dbaName']),
+            'his' => HIP::all(['HISId', 'hisName']),
+            'bank' => Bank::all(['bankId', 'bankName']),
+            'pfa' => PFA::all(['PFAId', 'pfaName']),
+            'filters' => [
+                'search' => $search,
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
@@ -104,4 +138,12 @@ class StaffController extends Controller
         $staff->delete();
         return redirect()->route('staff.index');
     }
+
+
+    public function transfer(Request $request, Staff $staff)
+{
+    $request->validate(['dba' => 'required']);
+    $staff->update(['dba' => $request->dba]);
+    return redirect()->route('staff.index')->with('success', 'Staff transferred successfully');
+}
 }

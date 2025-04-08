@@ -1,7 +1,11 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
+import * as docx from 'docx'; // Use built-in types from docx
+import { Document, Packer, Paragraph, Table, TableCell, TableRow } from 'docx';
+import { saveAs } from 'file-saver'
 
 interface Staff {
     id: number;
@@ -61,14 +65,60 @@ interface Pfa {
     pfaName: string;
 }
 
+interface PaginationLinks {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface StaffPagination {
+    data: Staff[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: PaginationLinks[];
+}
+
 interface Props {
-    staff: Staff[];
+    // staff: Staff[];
+    staff: StaffPagination;
     cadres: Cadre[];
     dbas: Dba[];
     his: His[];
     bank: Bank[];
     pfa: Pfa[];
+    filters: {
+        search: string;
+        per_page: number;
+    };
 }
+
+
+// Define available fields for selection
+const availableFields = [
+    { key: 'fileNumber', label: 'File Number' },
+    { key: 'surname', label: 'Surname' },
+    { key: 'firstName', label: 'First Name' },
+    { key: 'lastName', label: 'Last Name' },
+    { key: 'otherNames', label: 'Other Names' },
+    { key: 'dateOfBirth', label: 'Date of Birth' },
+    { key: 'gender', label: 'Gender' },
+    { key: 'stateOfOrigin', label: 'State of Origin' },
+    { key: 'lgaOfOrigin', label: 'LGA of Origin' },
+    { key: 'dateOfFirstAppointment', label: 'Date of First Appointment' },
+    { key: 'dateOfPresentAppointment', label: 'Date of Present Appointment' },
+    { key: 'dateOfConfirmation', label: 'Date of Confirmation' },
+    { key: 'cadre', label: 'Cadre' },
+    { key: 'accountNumber', label: 'Account Number' },
+    { key: 'bankId', label: 'Bank' },
+    { key: 'PFAId', label: 'PFA' },
+    { key: 'NHFNumber', label: 'NHF Number' },
+    { key: 'HISNumber', label: 'HIS Number' },
+    { key: 'HISId', label: 'HIS' },
+    { key: 'dba', label: 'DBA' },
+    { key: 'status', label: 'Status' },
+];
 
 // Complete list of Nigerian states and their LGAs (shortened for brevity here)
 const nigerianStates = [
@@ -388,13 +438,46 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Staff({ staff, cadres, dbas, his, bank, pfa }: Props) {
+export default function Staff({ staff, cadres, dbas, his, bank, pfa, filters }: Props) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
     const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
     const [currentStep, setCurrentStep] = useState(1);
     const [filteredLgas, setFilteredLgas] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState(filters.search || '');
+    const [exportFormat, setExportFormat] = useState<'excel' | 'word' | null>(null);
+    const [selectedFields, setSelectedFields] = useState<string[]>(availableFields.map(f => f.key));
+
+    const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+const [transferringStaff, setTransferringStaff] = useState<Staff | null>(null);
+const { data: transferData, setData: setTransferData, put: transferPut, processing: transferProcessing, errors: transferErrors, reset: resetTransfer } = useForm({
+    dba: '',
+});
+
+
+const handleTransfer = (staff: Staff) => {
+    setTransferringStaff(staff);
+    setTransferData('dba', staff.dba || ''); // Pre-fill with current department
+    setIsTransferModalOpen(true);
+};
+
+const handleTransferSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!transferringStaff) return;
+
+    transferPut(`/staff/${transferringStaff.staffId}/transfer`, {
+        onSuccess: () => {
+            setIsTransferModalOpen(false);
+            setTransferringStaff(null);
+            resetTransfer();
+        },
+        onError: (errors) => {
+            console.error('Transfer errors:', errors);
+        },
+    });
+};
 
     const { data, setData, post, put, delete: destroy, processing, errors, reset } = useForm({
         fileNumber: '',
@@ -437,6 +520,93 @@ export default function Staff({ staff, cadres, dbas, his, bank, pfa }: Props) {
             setData('lgaOfOrigin', '');
         }
     }, [data.stateOfOrigin]);
+
+
+    // Handle search submission
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        // Navigate to the same route with updated search query
+        window.location.href = route('staff.index', { search: searchQuery, per_page: filters.per_page });
+    };
+
+
+    const openExportModal = (format: 'excel' | 'word') => {
+        setExportFormat(format);
+        setIsExportModalOpen(true);
+    };
+
+    const handleFieldToggle = (fieldKey: string) => {
+        setSelectedFields(prev =>
+            prev.includes(fieldKey) ? prev.filter(f => f !== fieldKey) : [...prev, fieldKey]
+        );
+    };
+
+    const exportToExcel = () => {
+        const filteredData = staff.data.map(staffMember => {
+            const row: { [key: string]: any } = {};
+            selectedFields.forEach(field => {
+                if (field === 'cadre') row[field] = cadres.find(c => c.cadreId === parseInt(staffMember[field]))?.cadreName || staffMember[field];
+                else if (field === 'bankId') row[field] = bank.find(b => b.bankId === parseInt(staffMember[field]))?.bankName || staffMember[field];
+                else if (field === 'PFAId') row[field] = pfa.find(p => p.PFAId === staffMember[field])?.pfaName || staffMember[field];
+                else if (field === 'HISId') row[field] = his.find(h => h.HISId === staffMember[field])?.hisName || staffMember[field];
+                else if (field === 'dba') row[field] = dbas.find(d => d.dbaId === parseInt(staffMember[field]))?.dbaName || staffMember[field];
+                else row[field] = staffMember[field as keyof Staff] || 'N/A';
+            });
+            return row;
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(filteredData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Staff');
+        XLSX.writeFile(workbook, 'staff_data.xlsx');
+        setIsExportModalOpen(false);
+    };
+
+    const exportToWord = () => {
+        const doc = new docx.Document({
+            sections: [{
+                children: [
+                    new docx.Paragraph({
+                        text: 'Staff Data',
+                        heading: docx.HeadingLevel.TITLE,
+                    }),
+                    new docx.Table({
+                        rows: [
+                            new docx.TableRow({
+                                children: selectedFields.map(field => new docx.TableCell({
+                                    children: [new docx.Paragraph(availableFields.find(f => f.key === field)?.label || field)],
+                                })),
+                            }),
+                            ...staff.data.map(staffMember => new docx.TableRow({
+                                children: selectedFields.map(field => {
+                                    let value = staffMember[field as keyof Staff] || 'N/A';
+                                    if (field === 'cadre') value = cadres.find(c => c.cadreId === parseInt(staffMember[field]))?.cadreName || value;
+                                    else if (field === 'bankId') value = bank.find(b => b.bankId === parseInt(staffMember[field]))?.bankName || value;
+                                    else if (field === 'PFAId') value = pfa.find(p => p.PFAId === staffMember[field])?.pfaName || value;
+                                    else if (field === 'HISId') value = his.find(h => h.HISId === staffMember[field])?.hisName || value;
+                                    else if (field === 'dba') value = dbas.find(d => d.dbaId === parseInt(staffMember[field]))?.dbaName || value;
+                                    return new docx.TableCell({
+                                        children: [new docx.Paragraph(value.toString())],
+                                    });
+                                }),
+                            })),
+                        ],
+                    }),
+                ],
+            }],
+        });
+    
+        docx.Packer.toBlob(doc).then(blob => {
+            saveAs(blob, 'staff_data.docx');
+            setIsExportModalOpen(false);
+        }).catch(err => console.error('Error generating Word file:', err));
+    };
+
+    const handleExport = () => {
+        if (exportFormat === 'excel') exportToExcel();
+        else if (exportFormat === 'word') exportToWord();
+    };
+
 
     const handleEdit = (staff: Staff) => {
         setEditingStaff(staff);
@@ -833,27 +1003,55 @@ export default function Staff({ staff, cadres, dbas, his, bank, pfa }: Props) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Staff Management" />
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 relative">
-                <div className="mb-4">
-                    <button
-                        onClick={() => {
-                            setEditingStaff(null);
-                            reset();
-                            setCurrentStep(1);
-                            setIsModalOpen(true);
-                        }}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                        Add Staff
-                    </button>
+            <div className="mb-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => {
+                                setEditingStaff(null);
+                                reset();
+                                setCurrentStep(1);
+                                setIsModalOpen(true);
+                            }}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                            Add Staff
+                        </button>
+                        <button
+                            onClick={() => openExportModal('excel')}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                        >
+                            Export to Excel
+                        </button>
+                        <button
+                            onClick={() => openExportModal('word')}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                        >
+                            Export to Word
+                        </button>
+                    </div>
+                    <form onSubmit={handleSearch} className="w-full sm:w-auto flex gap-2">
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search staff..."
+                            className="w-full sm:w-64 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                        >
+                            Search
+                        </button>
+                    </form>
                 </div>
 
                 {/* Table */}
-                <div className="border-sidebar-border/70 dark:border-sidebar-border relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border md:min-h-min">
+                <div className="border-sidebar-border/70 dark:border-sidebar-border relative flex-1 overflow-hidden rounded-xl border">
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse">
                             <thead className="bg-gray-50 dark:bg-gray-800">
                                 <tr>
-                                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ID</th> */}
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">File Number</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Staff Name</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
@@ -861,14 +1059,18 @@ export default function Staff({ staff, cadres, dbas, his, bank, pfa }: Props) {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {staff.map((org) => (
-                                    <tr key={org.staffId} className="hover:bg-gray-50 dark:hover:bg-gray-900">
-                                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{org.staffId}</td> */}
+                                {staff.data.map((org) => (
+                                    <tr key={org.id} className="hover:bg-gray-50 dark:hover:bg-gray-900">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{org.fileNumber}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{org.surname} {org.firstName} {org.otherNames}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{org.status}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                             <div className="flex space-x-2">
+                                            <button onClick={() => handleTransfer(org)} className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300" title="Transfer">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+        </button>
                                                 <button
                                                     onClick={() => handleViewSummary(org)}
                                                     className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
@@ -904,8 +1106,131 @@ export default function Staff({ staff, cadres, dbas, his, bank, pfa }: Props) {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination Controls */}
+                    <div className="p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div className="text-sm text-gray-700 dark:text-gray-300">
+                            Showing {staff.data.length} of {staff.total} records
+                        </div>
+                        <div className="flex gap-2 flex-wrap justify-center">
+                            {staff.links.map((link, index) => (
+                                <Link
+                                    key={index}
+                                    href={link.url || '#'}
+                                    className={`px-3 py-1 rounded-md text-sm ${
+                                        link.active
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500'
+                                    } ${!link.url ? 'cursor-not-allowed opacity-50' : ''}`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
+                        </div>
+                    </div>
                 </div>
 
+                {isExportModalOpen && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-md mx-auto relative">
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Select Fields to Export
+                </h2>
+                <button
+                    onClick={() => setIsExportModalOpen(false)}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl"
+                >
+                    ✕
+                </button>
+            </div>
+            <div className="max-h-[50vh] overflow-y-auto p-4">
+                <div className="space-y-2">
+                    {availableFields.map(field => (
+                        <div key={field.key} className="flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={selectedFields.includes(field.key)}
+                                onChange={() => handleFieldToggle(field.key)}
+                                className="mr-2"
+                            />
+                            <label className="text-gray-900 dark:text-white">{field.label}</label>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
+                <button
+                    onClick={() => setIsExportModalOpen(false)}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                >
+                    Cancel
+                </button>
+                <button
+                    onClick={handleExport}
+                    disabled={selectedFields.length === 0}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                    Export
+                </button>
+            </div>
+        </div>
+    </div>
+)}
+
+
+{isTransferModalOpen && transferringStaff && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-md mx-auto relative">
+            <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Transfer {transferringStaff.surname} {transferringStaff.firstName}
+                </h2>
+                <button
+                    onClick={() => setIsTransferModalOpen(false)}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl"
+                >
+                    ✕
+                </button>
+            </div>
+            <form onSubmit={handleTransferSubmit}>
+                <div className="p-4 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Department (DBA)</label>
+                        <select
+                            value={transferData.dba}
+                            onChange={(e) => setTransferData('dba', e.target.value)}
+                            className="block w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="">Select Department</option>
+                            {dbas.map((dba) => (
+                                <option key={dba.dbaId} value={dba.dbaId}>
+                                    {dba.dbaName}
+                                </option>
+                            ))}
+                        </select>
+                        {transferErrors.dba && <p className="mt-1 text-sm text-red-600">{transferErrors.dba}</p>}
+                    </div>
+                </div>
+                <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setIsTransferModalOpen(false)}
+                        className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={transferProcessing}
+                        className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50"
+                    >
+                        {transferProcessing ? 'Transferring...' : 'Transfer'}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+)}
                 {/* Main Form Modal */}
                 {isModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">

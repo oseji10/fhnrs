@@ -44,7 +44,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
     Route::put('/staff/{staff}', [StaffController::class, 'update'])->name('staff.update');
     Route::delete('/staff/{staff}', [StaffController::class, 'destroy'])->name('staff.destroy');
-
+    Route::put('/staff/{staff}/transfer', [StaffController::class, 'transfer'])->name('staff.transfer');
+    
     Route::get('/cadre-groups', [CadreController::class, 'cadreGroups'])->name('cadre-groups.index');
     Route::post('/cadre-groups', [CadreController::class, 'storeCadreGroup'])->name('cadre-groups.store');
     Route::put('/cadre-groups/{group}', [CadreController::class, 'update'])->name('cadre-groups.update');
