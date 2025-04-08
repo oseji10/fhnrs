@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\DBAs;
 use App\Models\Cadre;
 use App\Models\CadreGroup;
-use App\Models\CadreSubgroup;
+use App\Models\CadreSubGroup;
 use Inertia\Inertia;
 class CadreController extends Controller
 {

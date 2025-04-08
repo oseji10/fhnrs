@@ -17,7 +17,7 @@ class Cadre extends Model
 
     public function cadre_subgroup()
     {
-        return $this->belongsTo(CadreSubgroup::class, 'cadreSubGroupId');
+        return $this->belongsTo(CadreSubGroup::class, 'cadreSubGroupId');
     }
 
 }

@@ -56,12 +56,18 @@ interface Bank {
     bankName: string;
 }
 
+interface Pfa {
+    PFAId: number;
+    pfaName: string;
+}
+
 interface Props {
     staff: Staff[];
     cadres: Cadre[];
     dbas: Dba[];
     his: His[];
     bank: Bank[];
+    pfa: Pfa[];
 }
 
 // Complete list of Nigerian states and their LGAs (shortened for brevity here)
@@ -382,7 +388,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Staff({ staff, cadres, dbas, his, bank }: Props) {
+export default function Staff({ staff, cadres, dbas, his, bank, pfa }: Props) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
     const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
@@ -407,10 +413,10 @@ export default function Staff({ staff, cadres, dbas, his, bank }: Props) {
         accountNumber: '',
         bankId: '',
         PFANumber: '',
-        PFA: '',
+        PFAId: '',
         NHFNumber: '',
         HISNumber: '',
-        HIS: '',
+        HISId: '',
         dba: '',
         status: '',
     });
@@ -451,10 +457,10 @@ export default function Staff({ staff, cadres, dbas, his, bank }: Props) {
             accountNumber: staff.accountNumber || '',
             bankId: staff.bankId || '',
             PFANumber: staff.PFANumber || '',
-            PFA: staff.PFA || '',
+            PFA: staff.PFAId || '',
             NHFNumber: staff.NHFNumber || '',
             HISNumber: staff.HISNumber || '',
-            HIS: staff.HIS || '',
+            HIS: staff.HISId || '',
             dba: staff.dba || '',
             status: staff.status || '',
         });
