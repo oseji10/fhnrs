@@ -142,8 +142,17 @@ class StaffController extends Controller
 
     public function transfer(Request $request, Staff $staff)
 {
-    $request->validate(['dba' => 'required']);
+    $request->validate(['dba' => 'required', 'currentDba' => 'nullable',]);
     $staff->update(['dba' => $request->dba]);
+    // Log the transfer
+    $staff->transfers()->create([
+        'transferFrom' => $request->currentDba,
+        'transferTo' => $request->dba,
+        'comment' => $request->comment,
+        'initiatedBy' => auth()->user()->id,
+        'staffId' => $staff->staffId,  
+        'status'  => 'Pending',
+    ]);
     return redirect()->route('staff.index')->with('success', 'Staff transferred successfully');
 }
 }

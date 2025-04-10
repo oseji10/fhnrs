@@ -7,6 +7,8 @@ use App\Http\Controllers\CadreController;
 use App\Http\Controllers\PFAController;
 use App\Http\Controllers\HISController;
 use App\Http\Controllers\StaffController;
+
+use App\Http\Controllers\TransfersController;
 Route::get('/', function () {
     return Inertia::render('login');
 })->name('home');
@@ -45,7 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/staff/{staff}', [StaffController::class, 'update'])->name('staff.update');
     Route::delete('/staff/{staff}', [StaffController::class, 'destroy'])->name('staff.destroy');
     Route::put('/staff/{staff}/transfer', [StaffController::class, 'transfer'])->name('staff.transfer');
-    
+
     Route::get('/cadre-groups', [CadreController::class, 'cadreGroups'])->name('cadre-groups.index');
     Route::post('/cadre-groups', [CadreController::class, 'storeCadreGroup'])->name('cadre-groups.store');
     Route::put('/cadre-groups/{group}', [CadreController::class, 'update'])->name('cadre-groups.update');
@@ -55,6 +57,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/cadre-subgroups', [CadreController::class, 'storeCadreSubGroup'])->name('cadre-subgroups.store');
     Route::put('/cadre-subgroups/{group}', [CadreController::class, 'update'])->name('cadre-subgroups.update');
     Route::delete('/cadre-subgroups/{group}', [CadreController::class, 'destroy'])->name('cadre-subgroups.destroy');
+    
+    Route::get('/transfers', [TransfersController::class, 'index'])->name('transfers.index');
+    Route::post('/transfers', [TransfersController::class, 'store'])->name('transfers.index');
+    Route::put('/transfers', [TransfersController::class, 'update'])->name('transfers.index');
+    Route::delete('/transfers', [TransfersController::class, 'destroy'])->name('transfers.index');
+    Route::put('/transfers/{transfer}/respond', [TransfersController::class, 'respond'])->name('transfers.respond');
+    
+
 });
 
 require __DIR__.'/settings.php';

@@ -49,7 +49,7 @@ const mainNavItems: NavItem[] = [
 
     {
         title: 'Transfer/Posting',
-        href: '/transfer',
+        href: '/transfers',
         icon: ArrowLeftRightIcon,
     },
 

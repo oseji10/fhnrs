@@ -8,7 +8,7 @@ import { Document, Packer, Paragraph, Table, TableCell, TableRow } from 'docx';
 import { saveAs } from 'file-saver'
 
 interface Staff {
-    id: number;
+    staffId: number;
     fileNumber: string;
     surname: string;
     firstName: string;
@@ -454,12 +454,18 @@ export default function Staff({ staff, cadres, dbas, his, bank, pfa, filters }: 
 const [transferringStaff, setTransferringStaff] = useState<Staff | null>(null);
 const { data: transferData, setData: setTransferData, put: transferPut, processing: transferProcessing, errors: transferErrors, reset: resetTransfer } = useForm({
     dba: '',
+    currentDba: '',
+    comment: '',
 });
 
 
 const handleTransfer = (staff: Staff) => {
     setTransferringStaff(staff);
-    setTransferData('dba', staff.dba || ''); // Pre-fill with current department
+    setTransferData({
+        dba: staff.dba || '',           // Pre-fill new department with current value
+        currentDba: staff.dba || '', 
+        comment: '', // Pre-fill comment with current value
+    });
     setIsTransferModalOpen(true);
 };
 
@@ -468,6 +474,12 @@ const handleTransferSubmit = (e: React.FormEvent) => {
     if (!transferringStaff) return;
 
     transferPut(`/staff/${transferringStaff.staffId}/transfer`, {
+        data: {
+            dba: transferData.dba,
+            currentDba: transferData.currentDba,
+            staffId: transferringStaff.staffId,
+            comment: transferData.comment,
+        },
         onSuccess: () => {
             setIsTransferModalOpen(false);
             setTransferringStaff(null);
@@ -1066,11 +1078,26 @@ const handleTransferSubmit = (e: React.FormEvent) => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{org.status}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                             <div className="flex space-x-2">
-                                            <button onClick={() => handleTransfer(org)} className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300" title="Transfer">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-            </svg>
-        </button>
+                                            <button 
+    onClick={() => handleTransfer(org)} 
+    className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300" 
+    title="Transfer"
+>
+    <svg 
+        className="w-5 h-5" 
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24" 
+        xmlns="http://www.w3.org/2000/svg"
+    >
+        <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M9 5h12m0 0l-4 4m4-4l-4-4M15 19H3m0 0l4-4m-4 4l4 4" 
+        />
+    </svg>
+</button>
                                                 <button
                                                     onClick={() => handleViewSummary(org)}
                                                     className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
@@ -1091,7 +1118,7 @@ const handleTransferSubmit = (e: React.FormEvent) => {
                                                     </svg>
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(org.id)}
+                                                    onClick={() => handleDelete(org.staffId)}
                                                     className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                                                     title="Delete"
                                                 >
@@ -1195,6 +1222,15 @@ const handleTransferSubmit = (e: React.FormEvent) => {
             <form onSubmit={handleTransferSubmit}>
                 <div className="p-4 space-y-4">
                     <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Department (DBA)</label>
+                        <input
+                            type="text"
+                            value={dbas.find(d => d.dbaId === parseInt(transferData.currentDba))?.dbaName || transferData.currentDba || 'N/A'}
+                            readOnly
+                            className="block w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
+                        />
+                    </div>
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Department (DBA)</label>
                         <select
                             value={transferData.dba}
@@ -1210,7 +1246,20 @@ const handleTransferSubmit = (e: React.FormEvent) => {
                         </select>
                         {transferErrors.dba && <p className="mt-1 text-sm text-red-600">{transferErrors.dba}</p>}
                     </div>
-                </div>
+
+                    <div>
+                           
+    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reason (Comment)</label>
+    <textarea 
+        value={transferData.comment}  // ✅ Correct: Use transferData
+        onChange={(e) => setTransferData('comment', e.target.value)}  // ✅ Correct: Use setTransferData
+        className="block w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    >
+    </textarea>
+</div>
+                        </div>
+
+                {/* </div> */}
                 <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
                     <button
                         type="button"
@@ -1221,7 +1270,7 @@ const handleTransferSubmit = (e: React.FormEvent) => {
                     </button>
                     <button
                         type="submit"
-                        disabled={transferProcessing}
+                        disabled={transferProcessing || transferData.dba === transferData.currentDba}
                         className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50"
                     >
                         {transferProcessing ? 'Transferring...' : 'Transfer'}
@@ -1230,8 +1279,7 @@ const handleTransferSubmit = (e: React.FormEvent) => {
             </form>
         </div>
     </div>
-)}
-                {/* Main Form Modal */}
+)}                {/* Main Form Modal */}
                 {isModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
                         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto relative">

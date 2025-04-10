@@ -48,4 +48,14 @@ class STAFF extends Model
     {
         return $this->belongsTo(PFA::class, 'PFAId');
     }
+
+    public function transfers()
+    {
+        return $this->hasMany(Transfers::class, 'staffId');
+    }
+
+    public function dba()
+    {
+        return $this->belongsTo(DBAs::class, 'dba');
+    }
 }
